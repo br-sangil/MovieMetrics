@@ -25,9 +25,18 @@ const api_key string = "d3c9a85e"
 func main() {
 	result := GetRequest("i", "tt3896198")
 
+	//WILL BE REMOVED LATER ON THIS IS JUST A TEST TO SEE IF WE PROPERLY GATHERED ALL INFORMATION (check terminal output when running)
 	var firstMovie movie
 	json.Unmarshal([]byte(result), &firstMovie)
+	fmt.Println("Results: ")
 	fmt.Println(firstMovie.Title)
+	fmt.Println(firstMovie.Genre)
+	fmt.Println(firstMovie.Actors)
+	fmt.Println(firstMovie.Director)
+	fmt.Println(firstMovie.Rated)
+	fmt.Println(firstMovie.Type)
+	fmt.Println(firstMovie.Language)
+	fmt.Println(firstMovie.Ratings)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello")
