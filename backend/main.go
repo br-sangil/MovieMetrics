@@ -1,16 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
+type movie struct {
+	Title    string
+	Genre    string
+	Actors   string
+	Director string
+	Rated    string
+	Type     string
+	Language string
+	Ratings  string
+}
+
+//This is our request API key
 const api_key string = "d3c9a85e"
 
 func main() {
-	GetRequest("tt3896198", "i")
+	result := GetRequest("i", "tt3896198")
+
+	var firstMovie movie
+	json.Unmarshal([]byte(result), &firstMovie)
+	fmt.Println(firstMovie.Title)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello")
@@ -24,9 +41,9 @@ func main() {
 
 }
 
-// i=tt3896198
+// example request i=tt3896198
 // GetRequest takes in the query code and a flag. Returns a string of JSON
-func GetRequest(query string, flag string) (json string) {
+func GetRequest(flag string, query string) (json string) {
 	theURL := "http://www.omdbapi.com/?" + flag + "=" + query + "&apikey=" + api_key
 
 	response, err := http.Get(theURL)
