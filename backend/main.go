@@ -9,6 +9,9 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/anaskhan96/soup"
 )
 
 //Movie structure containing info. used for determining "rank"
@@ -80,6 +83,8 @@ func (pq *PriorityQueue) update(m *Movie, value string, priority int) {
 func main() {
 	result := GetRequest("i=tt3896198")
 
+	wordMap := getCommonWords()
+
 	//WILL BE REMOVED LATER ON THIS IS JUST A TEST TO SEE IF WE PROPERLY GATHERED ALL INFORMATION (check terminal output when running)
 	var firstMovie Movie
 	json.Unmarshal([]byte(result), &firstMovie)
@@ -124,6 +129,8 @@ func main() {
 		item := heap.Pop(&pq).(Movie)
 		fmt.Printf("%2d:%s\n", item.priority, item.value)
 	}
+
+	getTitlePoints(movie, &firstMovie, wordMap)
 	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -208,87 +215,143 @@ func checkNilErr(err error) {
 }
 
 //gives a priority to a Movie based on the desired Movie
-func getPriority(m *Movie, desiredMovie *Movie) int {
-	var priority int
-	priority += getTitlePoints(m, desiredMovie)
-	priority += getGenrePoints(m, desiredMovie)
-	priority += getActorPoints(m, desiredMovie)
-	priority += getDirectorPoints(m, desiredMovie)
-	priority += getRatedPoints(m, desiredMovie)
-	priority += getTypePoints(m, desiredMovie)
-	priority += getLanguagePoints(m, desiredMovie)
-	priority += getRatingsPoints(m, desiredMovie)
-	return m.priority
-}
+// func getPriority(m *Movie, desiredMovie *Movie) int {
+// 	// 	var priority int
+// 	// 	// priority += getTitlePoints(m, desiredMovie)
+// 	// 	priority += getGenrePoints(m, desiredMovie)
+// 	// 	priority += getActorPoints(m, desiredMovie)
+// 	// 	priority += getDirectorPoints(m, desiredMovie)
+// 	// 	priority += getRatedPoints(m, desiredMovie)
+// 	// 	priority += getTypePoints(m, desiredMovie)
+// 	// 	priority += getLanguagePoints(m, desiredMovie)
+// 	// 	priority += getRatingsPoints(m, desiredMovie)
+// 	// 	return m.priority
+// }
 
 //TODO: make sure the function follows the ranking system above 1/36 * 8 max for Title matching
-func getTitlePoints(m *Movie, desiredMovie *Movie) int {
-	if m.Title == desiredMovie.Title {
-		return 1
+func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) float64 {
+	//first identify common words for both m and desiredMovie
+	movieNewTitle := removeCommonWords(m, common)
+	desiredMovieNewTitle := removeCommonWords(desiredMovie, common)
+	//then compare lexicographically to get score and return and save into m
+	// (1/36 * 8) / len(desiredMovieNewTitle)
+	var onePoint float64 = (1. / 36.) * 8. / float64(len(desiredMovieNewTitle))
+
+	//if match then += onePoint
+	points := 0.0
+	for _, str := range movieNewTitle {
+		for _, str2 := range desiredMovieNewTitle {
+			if strings.ToLower(string(str)) == strings.ToLower(string(str2)) {
+				points += onePoint
+			}
+		}
 	}
-	return 0
+
+	return points
 }
 
-func getGenrePoints(m *Movie, desiredMovie *Movie) int {
-	if m.Genre == desiredMovie.Genre {
-		return 1
+func removeCommonWords(m *Movie, common map[string]string) string {
+	movieNewTitle := ""
+	for _, str := range m.Title {
+		if _, ok := common[string(str)]; !ok {
+			//word is not common
+			movieNewTitle += string(str) + " "
+		}
 	}
-	return 0
+
+	return strings.Trim(movieNewTitle, " ")
 }
 
-func getActorPoints(m *Movie, desiredMovie *Movie) int {
-	if m.Actors == desiredMovie.Actors {
-		return 1
+func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
+	desiredGenre := strings.Split(desiredMovie.Genre, ", ")
+	newGenre := strings.Split(m.Genre, ", ")
+
+	var onePoint float64 = (1. / 36.) * 7. / float64(len(desiredGenre))
+
+	points := 0.0
+	for _, str := range desiredGenre {
+		for _, str2 := range newGenre {
+			if str == str2 {
+				points += onePoint
+			}
+		}
 	}
-	return 0
+
+	return points
 }
 
-func getDirectorPoints(m *Movie, desiredMovie *Movie) int {
-	if m.Director == desiredMovie.Director {
-		return 1
+func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
+	desiredActors := strings.Split(desiredMovie.Actors, ", ")
+	newActors := strings.Split(m.Actors, ", ")
+
+	var onePoint float64 = (1. / 36.) * 6. / float64(len(desiredActors))
+	points := 0.0
+	for _, str := range desiredActors {
+		for _, str2 := range newActors {
+			if str == str2 {
+				points += onePoint
+			}
+		}
 	}
-	return 0
+
+	return points
 }
 
-func getRatedPoints(m *Movie, desiredMovie *Movie) int {
+func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
+	desiredDirector := strings.Split(desiredMovie.Director, ", ")
+	newDirector := strings.Split(m.Director, ", ")
+
+	var onePoint float64 = (1. / 36.) * 5. / float64(len(desiredDirector))
+	points := 0.0
+	for _, str := range desiredDirector {
+		for _, str2 := range newDirector {
+			if str == str2 {
+				points += onePoint
+			}
+		}
+	}
+
+	return points
+}
+
+func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
+	var onePoint float64 = (1. / 36.) * 4
 	if m.Rated == desiredMovie.Rated {
-		return 1
+		return onePoint
 	}
-	return 0
+	return onePoint / 2.
 }
 
-func getTypePoints(m *Movie, desiredMovie *Movie) int {
+func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
+	var onePoint float64 = (1. / 36.) * 3
 	if m.Type == desiredMovie.Type {
-		return 1
+		return onePoint
 	}
-	return 0
+
+	return onePoint / 2.
 }
 
-func getLanguagePoints(m *Movie, desiredMovie *Movie) int {
+func getLanguagePoints(m *Movie, desiredMovie *Movie) float64 {
+	var onePoint float64 = (1. / 36.) * 3
 	if m.Language == desiredMovie.Language {
-		return 1
+		return onePoint
 	}
+
 	return 0
 }
 
-func getRatingsPoints(m *Movie, desiredMovie *Movie) int {
-	if m.Ratings == desiredMovie.Ratings {
-		return 1
-	}
-	return 0
-}
+func getCommonWords() map[string]string {
+	resp, err := soup.Get("https://www.espressoenglish.net/the-100-most-common-words-in-english/")
+	checkNilErr(err)
 
-// //write a function that creates random Movie struct
-// //and returns it
-// func createRandomMovie() Movie {
-// 	var movie Movie
-// 	movie.Title = "Random Movie"
-// 	movie.Genre = "Random Genre"
-// 	movie.Actors = "Random Actors"
-// 	movie.Director = "Random Director"
-// 	movie.Rated = "Random Rated"
-// 	movie.Type = "Random Type"
-// 	movie.Language = "Random Language"
-// 	movie.Ratings = "Random Ratings"
-// 	return movie
-// }
+	// fmt.Printf("%v type: %T \n", resp, resp)
+	doc := soup.HTMLParse(resp)
+	words := doc.FindAll("td")
+
+	wordMap := make(map[string]string)
+	for _, word := range words {
+		commonWord := strings.Split(word.Text(), ".")
+		wordMap[strings.Trim(commonWord[1], " ")] = strings.Trim(commonWord[1], " ")
+	}
+	return wordMap
+}
