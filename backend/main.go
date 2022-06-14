@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 )
 
 //Movie structure containing info. used for determining "rank"
@@ -132,8 +134,49 @@ func main() {
 		fmt.Fprintf(w, "Hi")
 	})
 
+	http.HandleFunc("/random", getRandomMovie)
+
 	log.Fatal(http.ListenAndServe(":8081", nil))
 
+}
+
+func getRandomMovie(w http.ResponseWriter, r *http.Request) {
+	movieFound := false
+
+	for !movieFound {
+		imbdID := strconv.Itoa(rand.Intn(2155529) + 1)
+		for len(imbdID) < 7 {
+			imbdID = "0" + imbdID
+		}
+		fmt.Println("Movie ID:", imbdID)
+
+		response, err := http.Get("http://www.omdbapi.com/?i=tt" + imbdID + "&apikey=" + api_key)
+		if err != nil {
+			panic(err)
+		}
+
+		defer response.Body.Close()
+
+		content, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(content), &data)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Movie data: %+v\n", data)
+
+		if data["Response"] != "False" {
+			movieFound = true
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(data)
+		}
+	}
 }
 
 // GetRequest takes in the query code and a flag. Returns a string of JSON
