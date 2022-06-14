@@ -94,7 +94,7 @@ func main() {
 	firstMovie.priority = 400
 	movies := map[string]int{
 		firstMovie.Title: firstMovie.priority,
-		"movie":          550,go
+		"movie":          550,
 		"movie2":         50,
 	}
 
@@ -138,6 +138,8 @@ func main() {
 
 // GetRequest takes in the query code and a flag. Returns a string of JSON
 func GetRequest(flag string, query string) string {
+	//there could be a more effective way of concatenating the strings
+	//but this is the easiest way to do it for now
 	theURL := "http://www.omdbapi.com/?" + flag + "=" + query + "&apikey=" + api_key
 
 	response, err := http.Get(theURL)
@@ -148,8 +150,8 @@ func GetRequest(flag string, query string) string {
 	defer response.Body.Close()
 
 	fmt.Printf("[STATUS CODE]: {%d}\n", response.StatusCode)
-	fmt.Printf("[CONTENT LENGHT]: {%d}\n", response.ContentLength)
-
+	// fmt.Printf("[CONTENT LENGHT]: {%d}\n", response.ContentLength)
+	fmt.Println("-----output-----")
 	content, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		panic(err)
@@ -159,3 +161,89 @@ func GetRequest(flag string, query string) string {
 
 	return string(content)
 }
+
+//gives a priority to a Movie based on the desired Movie
+func getPriority(m *Movie, desiredMovie *Movie) int {
+	var priority int
+	priority += getTitlePoints(m, desiredMovie)
+	priority += getGenrePoints(m, desiredMovie)
+	priority += getActorPoints(m, desiredMovie)
+	priority += getDirectorPoints(m, desiredMovie)
+	priority += getRatedPoints(m, desiredMovie)
+	priority += getTypePoints(m, desiredMovie)
+	priority += getLanguagePoints(m, desiredMovie)
+	priority += getRatingsPoints(m, desiredMovie)
+	return m.priority
+}
+
+//TODO: make sure the function follows the ranking system above 1/36 * 8 max for Title matching
+func getTitlePoints(m *Movie, desiredMovie *Movie) int {
+	if m.Title == desiredMovie.Title {
+		return 1
+	}
+	return 0
+}
+
+func getGenrePoints(m *Movie, desiredMovie *Movie) int {
+	if m.Genre == desiredMovie.Genre {
+		return 1
+	}
+	return 0
+}
+
+func getActorPoints(m *Movie, desiredMovie *Movie) int {
+	if m.Actors == desiredMovie.Actors {
+		return 1
+	}
+	return 0
+}
+
+func getDirectorPoints(m *Movie, desiredMovie *Movie) int {
+	if m.Director == desiredMovie.Director {
+		return 1
+	}
+	return 0
+}
+
+func getRatedPoints(m *Movie, desiredMovie *Movie) int {
+	if m.Rated == desiredMovie.Rated {
+		return 1
+	}
+	return 0
+}
+
+func getTypePoints(m *Movie, desiredMovie *Movie) int {
+	if m.Type == desiredMovie.Type {
+		return 1
+	}
+	return 0
+}
+
+func getLanguagePoints(m *Movie, desiredMovie *Movie) int {
+	if m.Language == desiredMovie.Language {
+		return 1
+	}
+	return 0
+}
+
+func getRatingsPoints(m *Movie, desiredMovie *Movie) int {
+	if m.Ratings == desiredMovie.Ratings {
+		return 1
+	}
+	return 0
+}
+
+// //write a function that creates random Movie struct
+// //and returns it
+// func createRandomMovie() Movie {
+// 	var movie Movie
+// 	movie.Title = "Random Movie"
+// 	movie.Genre = "Random Genre"
+// 	movie.Actors = "Random Actors"
+// 	movie.Director = "Random Director"
+// 	movie.Rated = "Random Rated"
+// 	movie.Type = "Random Type"
+// 	movie.Language = "Random Language"
+// 	movie.Ratings = "Random Ratings"
+// 	return movie
+// }
