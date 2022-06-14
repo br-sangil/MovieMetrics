@@ -9,5 +9,5 @@
 ---
 ###  Front-End TODO
 > feel free to add more
--add page system (app should have several pages: home, about...)
--front end for each page
+- add page system (app should have several pages: home, about...)
+- front end for each page
