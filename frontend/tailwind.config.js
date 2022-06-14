@@ -5,6 +5,9 @@ module.exports = {
   ],
   theme: {
     extend: {},
+    backgroundImage: {
+      'movie-posters': "url('../public/MoviePosters.jpeg')",
+    },
   },
   plugins: [],
 }
