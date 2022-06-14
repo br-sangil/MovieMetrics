@@ -147,6 +147,7 @@ func main() {
 
 }
 
+// Posts a random movie to the /random page
 func getRandomMovie(w http.ResponseWriter, r *http.Request) {
 	movieFound := false
 
@@ -155,25 +156,13 @@ func getRandomMovie(w http.ResponseWriter, r *http.Request) {
 		for len(imbdID) < 7 {
 			imbdID = "0" + imbdID
 		}
-		fmt.Println("Movie ID:", imbdID)
-
-		// response, err := http.Get("http://www.omdbapi.com/?i=tt" + imbdID + "&apikey=" + api_key)
-		// // if err != nil {
-		// // 	panic(err)
-		// // }
-
-		// defer response.Body.Close()
-
-		// content, err := ioutil.ReadAll(response.Body)
-		// // if err != nil {
-		// // 	panic(err)
-		// // }
+		// fmt.Println("Movie ID:", imbdID)
 		content := GetRequest("i=tt" + imbdID)
 
 		var data map[string]interface{}
 		err := json.Unmarshal([]byte(content), &data)
 		checkNilErr(err)
-		fmt.Printf("Movie data: %+v\n", data)
+		// fmt.Printf("Movie data: %+v\n", data)
 
 		if data["Response"] != "False" {
 			movieFound = true
@@ -204,10 +193,10 @@ func GetRequest(flagAndQuery string) string {
 	checkNilErr(err)
 
 	// fmt.Println(string(content))
-
 	return string(content)
 }
 
+// Terminates the application if the error is not nil
 func checkNilErr(err error) {
 	if err != nil {
 		panic(err)
@@ -215,20 +204,19 @@ func checkNilErr(err error) {
 }
 
 //gives a priority to a Movie based on the desired Movie
-// func getPriority(m *Movie, desiredMovie *Movie) int {
-// 	// 	var priority int
-// 	// 	// priority += getTitlePoints(m, desiredMovie)
-// 	// 	priority += getGenrePoints(m, desiredMovie)
-// 	// 	priority += getActorPoints(m, desiredMovie)
-// 	// 	priority += getDirectorPoints(m, desiredMovie)
-// 	// 	priority += getRatedPoints(m, desiredMovie)
-// 	// 	priority += getTypePoints(m, desiredMovie)
-// 	// 	priority += getLanguagePoints(m, desiredMovie)
-// 	// 	priority += getRatingsPoints(m, desiredMovie)
-// 	// 	return m.priority
-// }
+func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) float64 {
+	var priority float64
+	priority += getTitlePoints(m, desiredMovie, common)
+	priority += getGenrePoints(m, desiredMovie)
+	priority += getActorPoints(m, desiredMovie)
+	priority += getDirectorPoints(m, desiredMovie)
+	priority += getRatedPoints(m, desiredMovie)
+	priority += getTypePoints(m, desiredMovie)
+	priority += getLanguagePoints(m, desiredMovie)
+	return priority
+}
 
-//TODO: make sure the function follows the ranking system above 1/36 * 8 max for Title matching
+// Calculates the points earned for Movie m based on the important matching words in the title
 func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) float64 {
 	//first identify common words for both m and desiredMovie
 	movieNewTitle := removeCommonWords(m, common)
@@ -250,6 +238,9 @@ func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) flo
 	return points
 }
 
+// Removes the common words for a specified movie.
+// We use our map[string]string as a set for "membership" test (does m.Title have words in common)
+// used in getTitlePoints
 func removeCommonWords(m *Movie, common map[string]string) string {
 	movieNewTitle := ""
 	for _, str := range m.Title {
@@ -262,6 +253,7 @@ func removeCommonWords(m *Movie, common map[string]string) string {
 	return strings.Trim(movieNewTitle, " ")
 }
 
+// Calculates the total of points gained for a Movie m based on the Genre
 func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredGenre := strings.Split(desiredMovie.Genre, ", ")
 	newGenre := strings.Split(m.Genre, ", ")
@@ -280,6 +272,7 @@ func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
 	return points
 }
 
+// Calculates the total of points gained for a Movie m based on the Actors
 func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredActors := strings.Split(desiredMovie.Actors, ", ")
 	newActors := strings.Split(m.Actors, ", ")
@@ -297,6 +290,7 @@ func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 	return points
 }
 
+// Calculates the total of points gained for a Movie m based on the Director(s)
 func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredDirector := strings.Split(desiredMovie.Director, ", ")
 	newDirector := strings.Split(m.Director, ", ")
@@ -314,6 +308,9 @@ func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 	return points
 }
 
+// Calculates the total of points gained for a Movie m for what it's Rated
+// if the rating matches then we will give full points
+// else we give half points because who cares about the rating. RIGHT?? do you care?
 func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
 	var onePoint float64 = (1. / 36.) * 4
 	if m.Rated == desiredMovie.Rated {
@@ -322,6 +319,9 @@ func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
 	return onePoint / 2.
 }
 
+// Calculates the total of points gained for a Movie m for the type of media
+// if media type matches then we give full points
+// else we give half points becuase we still want to consider series, episodes, etc..
 func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
 	var onePoint float64 = (1. / 36.) * 3
 	if m.Type == desiredMovie.Type {
@@ -331,6 +331,9 @@ func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
 	return onePoint / 2.
 }
 
+// Calculates the total of points gained for a Movie m for the language
+// if m matches desiredMovie we give full points
+// else do not add any points
 func getLanguagePoints(m *Movie, desiredMovie *Movie) float64 {
 	var onePoint float64 = (1. / 36.) * 3
 	if m.Language == desiredMovie.Language {
@@ -340,6 +343,8 @@ func getLanguagePoints(m *Movie, desiredMovie *Movie) float64 {
 	return 0
 }
 
+// fetches HTML data from espressoenglish.net for the 100 most common words in english
+// we store this data (PARSED) with key value pair for efficient look up (we will use the map mainly as a set abstract data type)
 func getCommonWords() map[string]string {
 	resp, err := soup.Get("https://www.espressoenglish.net/the-100-most-common-words-in-english/")
 	checkNilErr(err)
