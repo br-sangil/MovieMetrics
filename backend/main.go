@@ -78,7 +78,7 @@ func (pq *PriorityQueue) update(m *Movie, value string, priority int) {
 //---------------------------------------------------------------------------
 
 func main() {
-	result := GetRequest("i", "tt3896198")
+	result := GetRequest("i=tt3896198")
 
 	//WILL BE REMOVED LATER ON THIS IS JUST A TEST TO SEE IF WE PROPERLY GATHERED ALL INFORMATION (check terminal output when running)
 	var firstMovie Movie
@@ -150,23 +150,22 @@ func getRandomMovie(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println("Movie ID:", imbdID)
 
-		response, err := http.Get("http://www.omdbapi.com/?i=tt" + imbdID + "&apikey=" + api_key)
-		if err != nil {
-			panic(err)
-		}
+		// response, err := http.Get("http://www.omdbapi.com/?i=tt" + imbdID + "&apikey=" + api_key)
+		// // if err != nil {
+		// // 	panic(err)
+		// // }
 
-		defer response.Body.Close()
+		// defer response.Body.Close()
 
-		content, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			panic(err)
-		}
+		// content, err := ioutil.ReadAll(response.Body)
+		// // if err != nil {
+		// // 	panic(err)
+		// // }
+		content := GetRequest("i=tt" + imbdID)
 
 		var data map[string]interface{}
-		err = json.Unmarshal([]byte(content), &data)
-		if err != nil {
-			panic(err)
-		}
+		err := json.Unmarshal([]byte(content), &data)
+		checkNilErr(err)
 		fmt.Printf("Movie data: %+v\n", data)
 
 		if data["Response"] != "False" {
@@ -180,29 +179,32 @@ func getRandomMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetRequest takes in the query code and a flag. Returns a string of JSON
-func GetRequest(flag string, query string) string {
+//flagAndQuery param must take the form as flag=query
+func GetRequest(flagAndQuery string) string {
 	//there could be a more effective way of concatenating the strings
 	//but this is the easiest way to do it for now
-	theURL := "http://www.omdbapi.com/?" + flag + "=" + query + "&apikey=" + api_key
+	theURL := "http://www.omdbapi.com/?" + flagAndQuery + "&apikey=" + api_key
 
 	response, err := http.Get(theURL)
-	if err != nil {
-		panic(err)
-	}
+	checkNilErr(err)
 
 	defer response.Body.Close()
 
 	fmt.Printf("[STATUS CODE]: {%d}\n", response.StatusCode)
 	// fmt.Printf("[CONTENT LENGHT]: {%d}\n", response.ContentLength)
-	fmt.Println("-----output-----")
+	// fmt.Println("-----output-----")
 	content, err := ioutil.ReadAll(response.Body)
+	checkNilErr(err)
+
+	// fmt.Println(string(content))
+
+	return string(content)
+}
+
+func checkNilErr(err error) {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(string(content))
-
-	return string(content)
 }
 
 //gives a priority to a Movie based on the desired Movie
