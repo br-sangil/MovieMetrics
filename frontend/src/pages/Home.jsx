@@ -1,4 +1,3 @@
-import React from 'react'
 import Chat from '../components/Chat';
 import React, {useState, useEffect} from 'react'
 import axios from 'axios';
