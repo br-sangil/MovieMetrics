@@ -14,15 +14,15 @@ export default function Home() {
     
     if (!movie || movie === undefined || movie.length === 0) {
       return (
-        <div>
-          Loading
-        </div>
+        <a href="/random">
+        <img className="w-40" src="/movie_random.png" alt="logo" />
+      </a>
       )
     }
 
     return (
       <div>
-        <h1>Your Random Movie:</h1>
+       
         <MovieInfo movie={movie} />
       </div>
       
