@@ -1,12 +1,13 @@
 import React, {useState, useEffect} from 'react'
+import axios from 'axios';
 
 export default function Home() {
   const [search, setSearch] = useState("");
 
   const handleSearch = (event) => {
     event.preventDefault();
-    console.log("search");
-    console.log(search);
+    axios.get(`localhost:8081/?t=${encodeURI(search)}`);
+    
   }
 
 
