@@ -8,6 +8,7 @@ function App() {
     <>
     <Navbar />
     <Home />
+    <Random />
     </>
   );
 }

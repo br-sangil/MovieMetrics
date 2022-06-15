@@ -157,6 +157,8 @@ func main() {
 
 // Posts a random movie to the /random page
 func getRandomMovie(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	movieFound := false
 
 	for !movieFound {
@@ -367,4 +369,8 @@ func getCommonWords() map[string]string {
 		wordMap[strings.Trim(commonWord[1], " ")] = strings.Trim(commonWord[1], " ")
 	}
 	return wordMap
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 }
