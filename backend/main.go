@@ -132,15 +132,23 @@ func main() {
 
 	getTitlePoints(movie, &firstMovie, wordMap)
 	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
-
+	//home.html
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello")
+		if r != nil {
+			defer r.Body.Close()
+			search, err := ioutil.ReadAll(r.Body)
+			checkNilErr(err)
+			println(string(search))
+		}
 	})
-
+	//about.html
 	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		fmt.Fprintf(w, "Hi")
-	})
 
+	})
+	//surprise_me.html
 	http.HandleFunc("/random", getRandomMovie)
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
