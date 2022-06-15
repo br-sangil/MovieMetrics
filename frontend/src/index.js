@@ -10,10 +10,10 @@ export default function App(){
   return (
     <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Layout />}>
-      <Route index element={<Home />} />
-        <Route path="random" element={<Random/>} />
-        <Route path="about" element={<About/>} />
+        <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="/random" element={<Random/>} />
+        <Route path="/about" element={<About/>} />
       </Route>
     </Routes>
   </BrowserRouter>
