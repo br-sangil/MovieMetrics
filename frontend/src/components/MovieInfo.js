@@ -13,6 +13,7 @@ const MovieInfo = ({movie}) => {
 
     return (
         <div>
+            <img src={movie.Poster} alt="Movie poster not available" />
             <h1>Movie title: {movie.Title}</h1>
             <h1>Writer: {movie.Writer}</h1>
             <h1>Year released: {movie.Year}</h1>
