@@ -143,6 +143,7 @@ func main() {
 	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		if r != nil {
 			defer r.Body.Close()
 			getMovieSearch(w, r, wordMap)
@@ -199,20 +200,65 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 			movies = append(movies, searchResults[:]...)
 		}
 
+		movieMap := make(map[string]*Movie)
 		for _, movie := range movies {
-			getPriority(movie, &desiredMovie, common)
+			if _, ok := movieMap[movie.Title]; !ok {
+				movieMap[movie.Title] = movie
+			}
 		}
-		pq := make(PriorityQueue, len(movies))
-		copy(pq, movies)
-		for _, movie := range pq {
-			println("movie: %v\n", movie.Title)
-		}
+		//---
+		// This example creates a PriorityQueue with some items, adds and manipulates an item,
+		// // and then removes the items in priority order.
+		// func main() {
+		// 	// Some items and their priorities.
+		// 	items := map[string]int{
+		// 		"banana": 3, "apple": 2, "pear": 4,
+		// 	}
 
+		// 	// Create a priority queue, put the items in it, and
+		// 	// establish the priority queue (heap) invariants.
+		// 	pq := make(PriorityQueue, len(items))
+		// 	i := 0
+		// 	for value, priority := range items {
+		// 		pq[i] = &Item{
+		// 			value:    value,
+		// 			priority: priority,
+		// 			index:    i,
+		// 		}
+		// 		i++
+		// 	}
+		// 	heap.Init(&pq)
+
+		// 	// Insert a new item and then modify its priority.
+		// 	item := &Item{
+		// 		value:    "orange",
+		// 		priority: 1,
+		// 	}
+		// 	heap.Push(&pq, item)
+		// 	pq.update(item, item.value, 5)
+
+		// 	// Take the items out; they arrive in decreasing priority order.
+		// 	for pq.Len() > 0 {
+		// 		item := heap.Pop(&pq).(*Item)
+		// 		fmt.Printf("%.2d:%s ", item.priority, item.value)
+		// 	}
+		// }
+
+		//--
+
+		pq := make(PriorityQueue, 0)
 		heap.Init(&pq)
 
-		fmt.Printf("PQ: %+v\n", pq)
-		fmt.Printf("FIRST ITEM: %+v\n", pq[0])
-		fmt.Printf("Second Item: %+v\n", pq[1])
+		for _, movie := range movieMap {
+			getPriority(movie, &desiredMovie, common)
+			// add movie to priority queue here
+			heap.Push(&pq, movie)
+			pq.update(movie, movie.Title, movie.priority)
+		}
+
+		for i := 0; i < pq.Len(); i++ {
+			println("movie:", pq[i].Title, "pr:", pq[i].priority)
+		}
 	}
 }
 
@@ -277,7 +323,6 @@ func searchMovies(keyWord string) ([]*Movie, error) {
 	for _, val := range movies.Search {
 		response := GetRequest("t=" + val.Title)
 		json.Unmarshal([]byte(response), &val)
-		val.isAdd = true
 	}
 	return movies.Search, nil
 }

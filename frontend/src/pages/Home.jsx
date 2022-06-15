@@ -6,7 +6,7 @@ export default function Home() {
 
   const handleSearch = async (event) => {
     event.preventDefault();
-    const movie = await axios.get(`localhost:8081/?t=${encodeURI(search)}`);
+    const movie = await axios.get(`http://localhost:8081/?t=${encodeURI(search)}`);
     console.log(movie);
   }
 
