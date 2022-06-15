@@ -54,6 +54,16 @@ func (h PriorityQueue) Len() int { return len(h) }
 //but we want the opposite result so we will use greater than instead
 func (h PriorityQueue) Less(idxP1, idxP2 int) bool { return h[idxP1].priority > h[idxP2].priority }
 
+// func (h PriorityQueue) Less(i, j int) bool {
+// 	res := big.NewFloat(h[i].priority).Cmp(big.NewFloat(h[j].priority))
+// 	if res == 0 {
+// 		return false
+// 	} else if res > 0 {
+// 		return true
+// 	}
+// 	return false
+// }
+
 //swap the given indices
 func (h PriorityQueue) Swap(idxP1, idxP2 int) {
 	h[idxP1], h[idxP2] = h[idxP2], h[idxP1]
@@ -78,7 +88,7 @@ func (pq *PriorityQueue) Pop() any {
 	old[n-1] = nil
 	movie.index = -1
 	*pq = old[0 : n-1]
-	return *movie
+	return movie
 }
 
 // update modifies the priority and value of an Item in the queue.
@@ -206,45 +216,6 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 				movieMap[movie.Title] = movie
 			}
 		}
-		//---
-		// This example creates a PriorityQueue with some items, adds and manipulates an item,
-		// // and then removes the items in priority order.
-		// func main() {
-		// 	// Some items and their priorities.
-		// 	items := map[string]int{
-		// 		"banana": 3, "apple": 2, "pear": 4,
-		// 	}
-
-		// 	// Create a priority queue, put the items in it, and
-		// 	// establish the priority queue (heap) invariants.
-		// 	pq := make(PriorityQueue, len(items))
-		// 	i := 0
-		// 	for value, priority := range items {
-		// 		pq[i] = &Item{
-		// 			value:    value,
-		// 			priority: priority,
-		// 			index:    i,
-		// 		}
-		// 		i++
-		// 	}
-		// 	heap.Init(&pq)
-
-		// 	// Insert a new item and then modify its priority.
-		// 	item := &Item{
-		// 		value:    "orange",
-		// 		priority: 1,
-		// 	}
-		// 	heap.Push(&pq, item)
-		// 	pq.update(item, item.value, 5)
-
-		// 	// Take the items out; they arrive in decreasing priority order.
-		// 	for pq.Len() > 0 {
-		// 		item := heap.Pop(&pq).(*Item)
-		// 		fmt.Printf("%.2d:%s ", item.priority, item.value)
-		// 	}
-		// }
-
-		//--
 
 		pq := make(PriorityQueue, 0)
 		heap.Init(&pq)
@@ -340,7 +311,7 @@ func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) {
 	priority += getRatedPoints(m, desiredMovie)
 	priority += getTypePoints(m, desiredMovie)
 	priority += getLanguagePoints(m, desiredMovie)
-	(*m).priority = priority
+	(*m).priority = (priority - float64(int(priority))) * 100
 	// println("calculated priority ", priority)
 }
 
