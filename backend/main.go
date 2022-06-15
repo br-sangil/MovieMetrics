@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -24,15 +25,17 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 	Rated    string // if match: importance(1 / 36) * 4
 	Type     string // if match: importance(1 / 36) * 3
 	Language string // if match: importance(1 / 36) * 3
+	Poster   string // the url for posters
 	// Ratings  string // if match: importance(1 / 36) * 1
 
-	value    string //the short title for the movie used to simplify programming (usually will be set to a shorter version of the title)
-	priority int    // The priority of the movie or the "score"
-	index    int    //index of the movie in the PriorityQueue
+	value    string  //the short title for the movie used to simplify programming (usually will be set to a shorter version of the title)
+	priority float64 // The priority of the movie or the "score"
+	index    int     //index of the movie in the PriorityQueue
+
 }
 
-type SearchResult struct {
-	Search []string
+type MovieSearched struct {
+	Search []Movie `json:"Search"`
 }
 
 //This is our request API key
@@ -79,7 +82,7 @@ func (pq *PriorityQueue) Pop() any {
 }
 
 // update modifies the priority and value of an Item in the queue.
-func (pq *PriorityQueue) update(m *Movie, value string, priority int) {
+func (pq *PriorityQueue) update(m *Movie, value string, priority float64) {
 	m.value = value
 	m.priority = priority
 	heap.Fix(pq, m.index)
@@ -89,67 +92,63 @@ func (pq *PriorityQueue) update(m *Movie, value string, priority int) {
 
 func main() {
 	result := GetRequest("i=tt3896198")
-	searchMovie("s=harry potter")
+	// searchMovies("harry potter")
 	wordMap := getCommonWords()
 
-	//WILL BE REMOVED LATER ON THIS IS JUST A TEST TO SEE IF WE PROPERLY GATHERED ALL INFORMATION (check terminal output when running)
 	var firstMovie Movie
 	json.Unmarshal([]byte(result), &firstMovie)
-	fmt.Println("Results: ")
-	fmt.Println(firstMovie.Title)
-	fmt.Println(firstMovie.Genre)
-	fmt.Println(firstMovie.Actors)
-	fmt.Println(firstMovie.Director)
-	fmt.Println(firstMovie.Rated)
-	fmt.Println(firstMovie.Type)
-	fmt.Println(firstMovie.Language)
+	// fmt.Println("Results: ")
+	// fmt.Println(firstMovie.Title)
+	// fmt.Println(firstMovie.Genre)
+	// fmt.Println(firstMovie.Actors)
+	// fmt.Println(firstMovie.Director)
+	// fmt.Println(firstMovie.Rated)
+	// fmt.Println(firstMovie.Type)
+	// fmt.Println(firstMovie.Language)
 	// fmt.Println(firstMovie.Ratings)
 
-	firstMovie.priority = 400
-	movies := map[string]int{
-		firstMovie.Title: firstMovie.priority,
-		"movie":          550,
-		"movie2":         50,
-	}
+	// firstMovie.priority = 400
+	// movies := map[string]int{
+	// 	firstMovie.value: 0,
+	// 	"movie":          550,
+	// 	"movie2":         50,
+	// }
 
-	pq := make(PriorityQueue, len(movies))
-	i := 0
-	for value, priority := range movies {
-		pq[i] = &Movie{
-			value:    value,
-			priority: priority,
-			index:    i,
-		}
-		i++
-	}
-	heap.Init(&pq)
+	// pq := make(PriorityQueue, len(movies))
+	// i := 0
+	// for value, priority := range movies {
+	// 	pq[i] = &Movie{
+	// 		value:    value,
+	// 		priority: 0,
+	// 		index:    i,
+	// 	}
+	// 	i++
+	// }
+	// heap.Init(&pq)
 
 	//insert new item:
-	movie := &Movie{
-		value:    "MOVIE",
-		priority: 300,
-	}
-	heap.Push(&pq, movie)
-	pq.update(movie, movie.value, 300)
+	// movie := &Movie{
+	// 	value:    "MOVIE",
+	// 	priority: 300,
+	// }
+	// heap.Push(&pq, movie)
+	// pq.update(movie, movie.value, 300)
 
-	for pq.Len() > 0 {
-		item := heap.Pop(&pq).(Movie)
-		fmt.Printf("%2d:%s\n", item.priority, item.value)
-	}
+	// for pq.Len() > 0 {
+	// 	item := heap.Pop(&pq).(Movie)
+	// 	fmt.Printf("%2d:%s\n", item.priority, item.value)
+	// }
 
-	getTitlePoints(movie, &firstMovie, wordMap)
+	// getTitlePoints(movie, &firstMovie, wordMap)
 	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello")
 		if r != nil {
 			defer r.Body.Close()
-			// checkNilErr(err)
-			response := r.URL.RawQuery
-			println(string(response))
+			getMovieSearch(w, r, wordMap)
 		}
-
 	})
+	// "localhost:8081/?t=<search>"
 
 	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hi")
@@ -158,11 +157,67 @@ func main() {
 		}
 
 	})
+	// 	he title search term is hello world
+	// [STATUS CODE]: {200}
+	// Movie data: {Title:Hello World Genre:Animation, Comedy, Drama Actors:Haruka Fukuhara, Minami Hamabe, Takumi Kitamura Director:Tomohiko Itô Rated:N/A Type:movie Language:Japanese value: priority:0 index:0}
+	// Search terms: H e l l o   W o r l d
 
 	http.HandleFunc("/random", getRandomMovie)
 
 	log.Fatal(http.ListenAndServe(port, nil))
 
+}
+
+// search up movie /?t=<whatever you're searching up by title>
+func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]string) {
+	enableCors(&w)
+
+	if r != nil {
+		query, ok := r.URL.Query()["t"]
+
+		if !ok || len(query[0]) < 1 {
+			fmt.Println("QUERY KEY t NOT FOUND IN URL")
+			return
+		}
+
+		searchTerm := query[0]
+		fmt.Println("The title search term is", searchTerm)
+
+		content := GetRequest("t=" + searchTerm)
+
+		var desiredMovie Movie
+		err := json.Unmarshal([]byte(content), &desiredMovie)
+		checkNilErr(err)
+		fmt.Printf("Movie data: %+v\n", desiredMovie)
+
+		searchKeys := removeCommonWords(&desiredMovie, common)
+		fmt.Println("Search terms:", searchKeys)
+
+		// use search keys to search for movies
+		// such that we search for movies with all keywords, then one keyword at a time
+		movies, err := searchMovies(searchKeys)
+		checkNilErr(err)
+
+		for _, word := range strings.Split(searchKeys, " ") {
+			searchResults, err := searchMovies(word)
+			checkNilErr(err)
+
+			movies = append(movies, searchResults[:]...)
+		}
+
+		for _, movie := range movies {
+			getPriority(&movie, &desiredMovie, common)
+		}
+		pq := make(PriorityQueue, len(movies))
+		for i, movie := range movies {
+			pq[i] = &movie
+		}
+		heap.Init(&pq)
+
+		fmt.Printf("PQ: %+v\n", pq)
+		fmt.Printf("FIRST ITEM: %+v\n", pq[0])
+		fmt.Printf("Second Item: %+v\n", pq[1])
+	}
 }
 
 // Posts a random movie to the /random page
@@ -225,7 +280,7 @@ func checkNilErr(err error) {
 }
 
 //gives a priority to a Movie based on the desired Movie
-func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) float64 {
+func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) {
 	var priority float64
 	priority += getTitlePoints(m, desiredMovie, common)
 	priority += getGenrePoints(m, desiredMovie)
@@ -234,7 +289,7 @@ func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) float6
 	priority += getRatedPoints(m, desiredMovie)
 	priority += getTypePoints(m, desiredMovie)
 	priority += getLanguagePoints(m, desiredMovie)
-	return priority
+	m.priority = priority
 }
 
 // Calculates the points earned for Movie m based on the important matching words in the title
@@ -264,7 +319,7 @@ func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) flo
 // used in getTitlePoints
 func removeCommonWords(m *Movie, common map[string]string) string {
 	movieNewTitle := ""
-	for _, str := range m.Title {
+	for _, str := range strings.Split(m.Title, " ") {
 		if _, ok := common[string(str)]; !ok {
 			//word is not common
 			movieNewTitle += string(str) + " "
@@ -370,7 +425,6 @@ func getCommonWords() map[string]string {
 	resp, err := soup.Get("https://www.espressoenglish.net/the-100-most-common-words-in-english/")
 	checkNilErr(err)
 
-	// fmt.Printf("%v type: %T \n", resp, resp)
 	doc := soup.HTMLParse(resp)
 	words := doc.FindAll("td")
 
@@ -382,24 +436,30 @@ func getCommonWords() map[string]string {
 	return wordMap
 }
 
-func searchMovie(s string) (*Movie, error) {
+// Searches and returns a list of movies based on key words
+func searchMovies(keyWord string) ([]Movie, error) {
 	//format for get response flag "s=<desired search>"
-	result := []byte(GetRequest(s))
+	result := []byte(GetRequest("s=" + keyWord))
+	if result == nil || string(result) == "" {
+		return nil, errors.New("BAD REQUEST")
+	}
 
-	var sResult SearchResult
-	json.Unmarshal(result, &sResult)
+	var movies MovieSearched
+	json.Unmarshal(result, &movies)
 
-	println("the results: ", sResult.Search[0])
-	// json.Unmarshal([]byte(result), &movieResult)
-	// for k, val := range movieResult {
-	// 	fmt.Printf(" key: %v {%T} value: %v {%T}\n", k, k, val, val)
-	// }
-
-	// fmt.Printf("JSON UNRMARshAL Type: %T ", movieResult)
-
-	return &Movie{}, nil
+	for _, val := range movies.Search {
+		response := GetRequest("t=" + val.Title)
+		json.Unmarshal([]byte(response), &val)
+	}
+	return movies.Search, nil
 }
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+}
+
+//
+//the results:  [10/13]0xc0001b8000
 // {"Search":
 // [{"Title":"Star Wars","Year":"1977","imdbID":"tt0076759","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BNzg4MjQxNTQtZmI5My00YjMwLWJlMjUtMmJlY2U2ZWFlNzY1XkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg"},
 //{"Title":"Star Wars: Episode V - The Empire Strikes Back","Year":"1980","imdbID":"tt0080684","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BYmU1NDRjNDgtMzhiMi00NjZmLTg5NGItZDNiZjU5NTU4OTE0XkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg"},
@@ -408,6 +468,3 @@ func searchMovie(s string) (*Movie, error) {
 //{"Title":"Star Wars: Episode I - The Phantom Menace","Year":"1999","imdbID":"tt0120915","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BYTRhNjcwNWQtMGJmMi00NmQyLWE2YzItODVmMTdjNWI0ZDA2XkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_SX300.jpg"},
 //{"Title":"Star Wars: Episode III - Revenge of the Sith","Year":"2005","imdbID":"tt0121766","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BNTc4MTc3NTQ5OF5BMl5BanBnXkFtZTcwOTg0NjI4NA@@._V1_SX300.jpg"},
 //{"Title":"Star Wars: Episode II - Attack of the Clones","Year":"2002","imdbID":"tt0121765","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMDAzM2M0Y2UtZjRmZi00MzVlLTg4MjEtOTE3NzU5ZDVlMTU5XkEyXkFqcGdeQXVyNDUyOTg3Njg@._V1_SX300.jpg"},{"Title":"Star Wars: Episode VIII - The Last Jedi","Year":"2017","imdbID":"tt2527336","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMjQ1MzcxNjg4N15BMl5BanBnXkFtZTgwNzgwMjY4MzI@._V1_SX300.jpg"},{"Title":"Rogue One: A Star Wars Story","Year":"2016","imdbID":"tt3748528","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMjEwMzMxODIzOV5BMl5BanBnXkFtZTgwNzg3OTAzMDI@._V1_SX300.jpg"},{"Title":"Star Wars: Episode IX - The Rise of Skywalker","Year":"2019","imdbID":"tt2527338","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMDljNTQ5ODItZmQwMy00M2ExLTljOTQtZTVjNGE2NTg0NGIxXkEyXkFqcGdeQXVyODkzNTgxMDg@._V1_SX300.jpg"}],"totalResults":"1691","Response":"True"}
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-}
