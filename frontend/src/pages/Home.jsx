@@ -1,5 +1,5 @@
 import React from 'react'
-
+import Chat from '../components/Chat';
 export default function Home() {
   return (
     <div className="bg-movie-posters flex h-screen justify-center items-center">
@@ -12,6 +12,9 @@ export default function Home() {
             </button>
             
         </div>
+        <div className="p-10 absolute bottom-0 right-0">
+<Chat />
+</div>
         </div>
     
   );
