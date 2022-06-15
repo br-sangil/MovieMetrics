@@ -259,6 +259,9 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 		for i := 0; i < pq.Len(); i++ {
 			println("movie:", pq[i].Title, "pr:", pq[i].priority)
 		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(pq[0])
 	}
 }
 
