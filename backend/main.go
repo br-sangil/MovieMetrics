@@ -31,8 +31,15 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 	index    int    //index of the movie in the PriorityQueue
 }
 
+type SearchResult struct {
+	Search []string
+}
+
 //This is our request API key
 const api_key string = "d3c9a85e"
+
+//Port number being used
+const port string = ":8081"
 
 //THE CODE BELOW MAY NEED TO BE MOVED TO A DIFFERENT MODULE
 //---------------------------------------------------------------------------
@@ -82,7 +89,7 @@ func (pq *PriorityQueue) update(m *Movie, value string, priority int) {
 
 func main() {
 	result := GetRequest("i=tt3896198")
-
+	searchMovie("s=harry potter")
 	wordMap := getCommonWords()
 
 	//WILL BE REMOVED LATER ON THIS IS JUST A TEST TO SEE IF WE PROPERLY GATHERED ALL INFORMATION (check terminal output when running)
@@ -154,7 +161,7 @@ func main() {
 
 	http.HandleFunc("/random", getRandomMovie)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(port, nil))
 
 }
 
@@ -206,6 +213,7 @@ func GetRequest(flagAndQuery string) string {
 	checkNilErr(err)
 
 	// fmt.Println(string(content))
+
 	return string(content)
 }
 
@@ -242,7 +250,7 @@ func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) flo
 	points := 0.0
 	for _, str := range movieNewTitle {
 		for _, str2 := range desiredMovieNewTitle {
-			if strings.ToLower(string(str)) == strings.ToLower(string(str2)) {
+			if strings.EqualFold(string(str), string(str2)) {
 				points += onePoint
 			}
 		}
@@ -376,12 +384,30 @@ func getCommonWords() map[string]string {
 
 func searchMovie(s string) (*Movie, error) {
 	//format for get response flag "s=<desired search>"
-	result := GetRequest("s=" + s)
-	println(result)
+	result := []byte(GetRequest(s))
+
+	var sResult SearchResult
+	json.Unmarshal(result, &sResult)
+
+	println("the results: ", sResult.Search[0])
+	// json.Unmarshal([]byte(result), &movieResult)
+	// for k, val := range movieResult {
+	// 	fmt.Printf(" key: %v {%T} value: %v {%T}\n", k, k, val, val)
+	// }
+
+	// fmt.Printf("JSON UNRMARshAL Type: %T ", movieResult)
 
 	return &Movie{}, nil
 }
+
+// {"Search":
+// [{"Title":"Star Wars","Year":"1977","imdbID":"tt0076759","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BNzg4MjQxNTQtZmI5My00YjMwLWJlMjUtMmJlY2U2ZWFlNzY1XkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode V - The Empire Strikes Back","Year":"1980","imdbID":"tt0080684","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BYmU1NDRjNDgtMzhiMi00NjZmLTg5NGItZDNiZjU5NTU4OTE0XkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode VI - Return of the Jedi","Year":"1983","imdbID":"tt0086190","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BOWZlMjFiYzgtMTUzNC00Y2IzLTk1NTMtZmNhMTczNTk0ODk1XkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode VII - The Force Awakens","Year":"2015","imdbID":"tt2488496","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BOTAzODEzNDAzMl5BMl5BanBnXkFtZTgwMDU1MTgzNzE@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode I - The Phantom Menace","Year":"1999","imdbID":"tt0120915","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BYTRhNjcwNWQtMGJmMi00NmQyLWE2YzItODVmMTdjNWI0ZDA2XkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode III - Revenge of the Sith","Year":"2005","imdbID":"tt0121766","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BNTc4MTc3NTQ5OF5BMl5BanBnXkFtZTcwOTg0NjI4NA@@._V1_SX300.jpg"},
+//{"Title":"Star Wars: Episode II - Attack of the Clones","Year":"2002","imdbID":"tt0121765","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMDAzM2M0Y2UtZjRmZi00MzVlLTg4MjEtOTE3NzU5ZDVlMTU5XkEyXkFqcGdeQXVyNDUyOTg3Njg@._V1_SX300.jpg"},{"Title":"Star Wars: Episode VIII - The Last Jedi","Year":"2017","imdbID":"tt2527336","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMjQ1MzcxNjg4N15BMl5BanBnXkFtZTgwNzgwMjY4MzI@._V1_SX300.jpg"},{"Title":"Rogue One: A Star Wars Story","Year":"2016","imdbID":"tt3748528","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMjEwMzMxODIzOV5BMl5BanBnXkFtZTgwNzg3OTAzMDI@._V1_SX300.jpg"},{"Title":"Star Wars: Episode IX - The Rise of Skywalker","Year":"2019","imdbID":"tt2527338","Type":"movie","Poster":"https://m.media-amazon.com/images/M/MV5BMDljNTQ5ODItZmQwMy00M2ExLTljOTQtZTVjNGE2NTg0NGIxXkEyXkFqcGdeQXVyODkzNTgxMDg@._V1_SX300.jpg"}],"totalResults":"1691","Response":"True"}
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-
 }
