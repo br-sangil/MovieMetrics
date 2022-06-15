@@ -1,6 +1,7 @@
+import React from 'react'
+import Chat from '../components/Chat';
 import React, {useState, useEffect} from 'react'
 import axios from 'axios';
-
 export default function Home() {
   const [search, setSearch] = useState("");
 
@@ -24,6 +25,9 @@ export default function Home() {
             </button>
           </form>
         </div>
+        <div className="p-10 absolute bottom-0 right-0">
+<Chat />
+</div>
         </div>
     
   );
