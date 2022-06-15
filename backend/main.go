@@ -261,7 +261,7 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(pq[0])
+		json.NewEncoder(w).Encode(pq)
 	}
 }
 
