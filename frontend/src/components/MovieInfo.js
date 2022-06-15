@@ -17,9 +17,9 @@ const MovieInfo = ({movie}) => {
             <h1>Movie title: {movie.Title}</h1>
             {/* <h1>Writer: {movie.Writer}</h1> */}
             {/* <h1>Year released: {movie.Year}</h1> */}
-            <h1>Genre: {movie.Genre}</h1>
             <h1>Director: {movie.Director}</h1>
             <h1>Actors: {movie.Actors}</h1>
+            <h1>Genre: {movie.Genre}</h1>
             {/* <h1>Plot: {movie.Plot}</h1> */}
             {/* <div>
             Ratings: <ul>
