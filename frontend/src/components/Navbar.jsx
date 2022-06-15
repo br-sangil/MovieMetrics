@@ -7,7 +7,7 @@ export default function Navbar() {
           <img className="w-40" src="/moviemetrics.png" alt="logo" />
         </a>
       <ul className="place-items-center flex ">
-        <NavItem content="Home" href="/Home" />
+        <NavItem content="Home" href="/" />
         <NavItem content="Surprise Me!" href="/random" />
         <NavItem content="About" href="/about" />
       </ul>
