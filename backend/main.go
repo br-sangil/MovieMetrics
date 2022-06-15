@@ -23,10 +23,10 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 	Director string // if match: importance(1 / 36) * 5
 	Rated    string // if match: importance(1 / 36) * 4
 	Type     string // if match: importance(1 / 36) * 3
-	Language string // if match: importance(1 / 36) * 2
-	Ratings  string // if match: importance(1 / 36) * 1
+	Language string // if match: importance(1 / 36) * 3
+	// Ratings  string // if match: importance(1 / 36) * 1
 
-	value    string //the short title for the movie used to simplify programming
+	value    string //the short title for the movie used to simplify programming (usually will be set to a shorter version of the title)
 	priority int    // The priority of the movie or the "score"
 	index    int    //index of the movie in the PriorityQueue
 }
@@ -96,7 +96,7 @@ func main() {
 	fmt.Println(firstMovie.Rated)
 	fmt.Println(firstMovie.Type)
 	fmt.Println(firstMovie.Language)
-	fmt.Println(firstMovie.Ratings)
+	// fmt.Println(firstMovie.Ratings)
 
 	firstMovie.priority = 400
 	movies := map[string]int{
@@ -132,26 +132,29 @@ func main() {
 
 	getTitlePoints(movie, &firstMovie, wordMap)
 	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
-	//home.html
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello")
 		if r != nil {
 			defer r.Body.Close()
-			search, err := ioutil.ReadAll(r.Body)
-			checkNilErr(err)
-			println(string(search))
+			// checkNilErr(err)
+			response := r.URL.RawQuery
+			println(string(response))
 		}
-	})
-	//about.html
-	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		fmt.Fprintf(w, "Hi")
 
 	})
-	//surprise_me.html
+
+	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hi")
+		if r != nil {
+			defer r.Body.Close()
+		}
+
+	})
+
 	http.HandleFunc("/random", getRandomMovie)
 
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }
 
@@ -367,4 +370,12 @@ func getCommonWords() map[string]string {
 		wordMap[strings.Trim(commonWord[1], " ")] = strings.Trim(commonWord[1], " ")
 	}
 	return wordMap
+}
+
+func searchMovie(s string) (*Movie, error) {
+	//format for get response flag "s=<desired search>"
+	result := GetRequest("s=" + s)
+	println(result)
+
+	return &Movie{}, nil
 }
