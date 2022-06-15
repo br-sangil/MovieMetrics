@@ -22,6 +22,7 @@ export default function Home() {
 
     return (
       <div>
+        <h1>Your Random Movie:</h1>
         <MovieInfo movie={movie} />
       </div>
       

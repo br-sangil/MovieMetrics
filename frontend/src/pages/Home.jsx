@@ -4,10 +4,10 @@ import axios from 'axios';
 export default function Home() {
   const [search, setSearch] = useState("");
 
-  const handleSearch = (event) => {
+  const handleSearch = async (event) => {
     event.preventDefault();
-    axios.get(`localhost:8081/?t=${encodeURI(search)}`);
-    
+    const movie = await axios.get(`localhost:8081/?t=${encodeURI(search)}`);
+    console.log(movie);
   }
 
 
