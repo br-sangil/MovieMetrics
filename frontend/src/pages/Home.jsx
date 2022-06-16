@@ -29,8 +29,7 @@ export default function Home() {
 
 
   return (
-  <div>
-    <div className="bg-movie-posters flex h-screen justify-center items-center">
+    <div className="bg-movie-posters flex h-screen justify-center items-center flex flex-col">
         
 
           <form onSubmit={handleSearch} className="flex justify-center" action="#movieList">
@@ -45,18 +44,22 @@ export default function Home() {
 
         <div className="p-10 absolute bottom-0 right-0">
           <Chat />
-          </div>
         </div>
 
-    {/* Search results */}
-    <div>
+        {/* Search results */}
+    <div className="flex flex-row pt-40">
       <a id="movielist"></a>
       {movies &&
         movies.map(movie =>
+          <div className='bg-slate-100 drop-shadow-2xl rounded-md mr-10 p-4'>
             <MovieInfo movie={movie} key={movie.Title} />
+            </div>
           )
       }
     </div>
-  </div>
+    </div>
+
+    
+  
   );
 }
