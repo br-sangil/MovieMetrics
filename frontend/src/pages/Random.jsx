@@ -17,14 +17,19 @@ export default function Home() {
         <div>
           Loading
         </div>
-      )
+      );
     }
 
     return (
-      <div>
-        <h1>Your Random Movie:</h1>
-        <MovieInfo movie={movie} />
+      <div className="bg-movie-posters flex h-screen justify-center items-center">
+          <div className="bg-slate-100 w-4/5 h-3/4 drop-shadow-2xl rounded-lg">
+            <img className="pt-4 m-auto" src="/movie_random.png" alt="logo" />
+            <MovieInfo movie={movie} />
+          </div>
+
       </div>
+
+       
       
     );
 }
