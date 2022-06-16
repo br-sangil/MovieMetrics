@@ -1,18 +1,27 @@
-import React from 'react'
 import Chat from '../components/Chat';
 import {useState, useEffect} from 'react'
 import axios from 'axios';
+import {useNavigate} from 'react-router-dom'
+import MovieInfo from '../components/MovieInfo';
+
 export default function Home() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [movies, setMovies] = useState(null);
 
   const handleSearch = async (event) => {
     event.preventDefault();
-    const movie = await axios.get(`localhost:8081/?t=${encodeURI(search)}`);
-    console.log(movie);
+    const movie = await axios.get(`http://localhost:8081/?t=${encodeURI(search)}`);
+    const data = movie.data;
+    setSearch('');
+    console.log(data);
+    setMovies(data);
+    // console.log(movies);
   }
 
 
   return (
+  <div>
     <div className="bg-movie-posters flex h-screen justify-center items-center">
         
 
@@ -27,10 +36,18 @@ export default function Home() {
         
 
         <div className="p-10 absolute bottom-0 right-0">
-        <Chat />
+          <Chat />
+          </div>
         </div>
 
+    {/* Search results */}
+    <div>
+      {movies &&
+        movies.map(movie =>
+            <MovieInfo movie={movie} key={movie.Title} />
+          )
+      }
     </div>
-    
+  </div>
   );
 }
