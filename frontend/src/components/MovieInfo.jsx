@@ -12,9 +12,9 @@ const MovieInfo = ({movie}) => {
 
 
     return (
-        <div>
+        <div className="pt-10 flex flex-col justify-center items-center text-xl">
             <img src={movie.Poster} alt="Movie poster not available" />
-            <h1>Movie title: {movie.Title}</h1>
+            <h1 className="pt-6">{movie.Title}</h1>
             {/* <h1>Writer: {movie.Writer}</h1> */}
             {/* <h1>Year released: {movie.Year}</h1> */}
             <h1>Director: {movie.Director}</h1>
