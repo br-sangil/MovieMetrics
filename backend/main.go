@@ -22,9 +22,9 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 	Genre    string // if match: importance(1 / 36) * 7
 	Actors   string // if match: importance(1 / 36) * 6
 	Director string // if match: importance(1 / 36) * 5
-	Rated    string // if match: importance(1 / 36) * 4
-	Type     string // if match: importance(1 / 36) * 3
-	Language string // if match: importance(1 / 36) * 3
+	Rated    string // if match: importance(1 / 36) * 4 (REMOVE THIS?)
+	Type     string // if match: importance(1 / 36) * 4 (REMOVE THIS?)
+	Language string // if match: importance(1 / 36) * 2
 	Poster   string // the url for posters
 	// Ratings  string // if match: importance(1 / 36) * 1
 
@@ -34,12 +34,31 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 	// isAdd    bool    // if added already is true
 }
 
+// structure which defines the movies searched via API
 type MovieSearched struct {
 	Search []*Movie `json:"Search"`
 }
 
+// structure which defines the movies that pertain to an actor via a different API
+type ActorSearch struct {
+	Results []*Movie2 `json:"results"`
+}
+
+// structure used specifically for The Movie Database API since we have different Keys
+type Actor struct {
+	Name   string    `json:"name"`
+	Movies []*Movie2 `json:"known_for"`
+}
+
+type Movie2 struct {
+	Title string `json:"original_title"`
+}
+
 //This is our request API key
 const api_key string = "d3c9a85e"
+
+// This is our request API key for The Movie Database API
+const api_key2 string = "007058439d1b582e951c080688c60593"
 
 //Port number being used
 const port string = ":8081"
@@ -52,7 +71,9 @@ func (h PriorityQueue) Len() int { return len(h) }
 
 //In Order to implement the heap.Interface we must use the less func
 //but we want the opposite result so we will use greater than instead
-func (h PriorityQueue) Less(idxP1, idxP2 int) bool { return h[idxP1].priority > h[idxP2].priority }
+func (h PriorityQueue) Less(idxP1, idxP2 int) bool {
+	return float32(h[idxP1].priority) > float32(h[idxP2].priority)
+}
 
 // func (h PriorityQueue) Less(i, j int) bool {
 // 	res := big.NewFloat(h[i].priority).Cmp(big.NewFloat(h[j].priority))
@@ -101,9 +122,11 @@ func (pq *PriorityQueue) update(m *Movie, title string, priority float64) {
 //---------------------------------------------------------------------------
 
 func main() {
+	wordMap := getCommonWords()
 	// result := GetRequest("i=tt3896198")
 	// searchMovies("harry potter")
-	wordMap := getCommonWords()
+	//
+	// findMoviesByActor("Paul Walker")
 
 	// var firstMovie Movie
 	// json.Unmarshal([]byte(result), &firstMovie)
@@ -236,6 +259,25 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 	}
 }
 
+// GET request themoviedb.org, searches by actor
+func findMoviesByActor(actor string) {
+	words := strings.Split(actor, " ")
+	actorParse := strings.Join(words, "%20")
+	println(actorParse)
+
+	dbURL := "https://api.themoviedb.org/3/search/person?api_key=" + api_key2 + "&language=en-US&query=" + actorParse + "&page=1&include_adult=false"
+	response, err := http.Get(dbURL)
+	checkNilErr(err)
+
+	defer response.Body.Close()
+
+	content, err := ioutil.ReadAll(response.Body)
+	checkNilErr(err)
+
+	println(string(content))
+
+}
+
 // Posts a random movie to the /random page (magnificient use of imbdID)
 func getRandomMovie(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
@@ -311,7 +353,7 @@ func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) {
 	priority += getRatedPoints(m, desiredMovie)
 	priority += getTypePoints(m, desiredMovie)
 	priority += getLanguagePoints(m, desiredMovie)
-	(*m).priority = (priority - float64(int(priority))) * 100
+	(*m).priority = priority * 100
 	// println("calculated priority ", priority)
 }
 
@@ -321,7 +363,7 @@ func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) flo
 	movieNewTitle := removeCommonWords(m, common)
 	desiredMovieNewTitle := removeCommonWords(desiredMovie, common)
 
-	var onePoint float64 = (1. / 36.) * 8. / float64(len(desiredMovieNewTitle))
+	var onePoint float64 = ((1. / 36.) * 8.) / float64(len(desiredMovieNewTitle))
 
 	//if match then += onePoint
 	points := 0.0
@@ -356,7 +398,7 @@ func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredGenre := strings.Split(desiredMovie.Genre, ", ")
 	newGenre := strings.Split(m.Genre, ", ")
 
-	var onePoint float64 = (1. / 36.) * 7. / float64(len(desiredGenre))
+	var onePoint float64 = ((1. / 36.) * 7.) / float64(len(desiredGenre))
 
 	points := 0.0
 	for _, str := range desiredGenre {
@@ -375,7 +417,7 @@ func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredActors := strings.Split(desiredMovie.Actors, ", ")
 	newActors := strings.Split(m.Actors, ", ")
 
-	var onePoint float64 = (1. / 36.) * 6. / float64(len(desiredActors))
+	var onePoint float64 = ((1. / 36.) * 6.) / float64(len(desiredActors))
 	points := 0.0
 	for _, str := range desiredActors {
 		for _, str2 := range newActors {
@@ -393,7 +435,7 @@ func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredDirector := strings.Split(desiredMovie.Director, ", ")
 	newDirector := strings.Split(m.Director, ", ")
 
-	var onePoint float64 = (1. / 36.) * 5. / float64(len(desiredDirector))
+	var onePoint float64 = ((1. / 36.) * 5.) / float64(len(desiredDirector))
 	points := 0.0
 	for _, str := range desiredDirector {
 		for _, str2 := range newDirector {
@@ -421,7 +463,7 @@ func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
 // if media type matches then we give full points
 // else we give half points becuase we still want to consider series, episodes, etc..
 func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
-	var onePoint float64 = (1. / 36.) * 3
+	var onePoint float64 = (1. / 36.) * 4
 	if m.Type == desiredMovie.Type {
 		return onePoint
 	}
@@ -433,7 +475,7 @@ func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
 // if m matches desiredMovie we give full points
 // else do not add any points
 func getLanguagePoints(m *Movie, desiredMovie *Movie) float64 {
-	var onePoint float64 = (1. / 36.) * 3
+	var onePoint float64 = (1. / 36.) * 2
 	if m.Language == desiredMovie.Language {
 		return onePoint
 	}
