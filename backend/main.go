@@ -72,7 +72,7 @@ func (h PriorityQueue) Len() int { return len(h) }
 //In Order to implement the heap.Interface we must use the less func
 //but we want the opposite result so we will use greater than instead
 func (h PriorityQueue) Less(idxP1, idxP2 int) bool {
-	return float32(h[idxP1].priority) > float32(h[idxP2].priority)
+	return int(h[idxP1].priority) > int(h[idxP2].priority)
 }
 
 // func (h PriorityQueue) Less(i, j int) bool {
@@ -183,7 +183,10 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 		}
 
 		actors := strings.Split(desiredMovie.Actors, ", ")
-		for _, actor := range actors {
+		for i, actor := range actors {
+			if i == 0 {
+				break
+			}
 			actorMovies := findMoviesByActor(actor).Results[0]
 			for _, movie := range actorMovies.Movies {
 				content := GetRequest("t=" + movie.Title)
@@ -335,7 +338,7 @@ func getTitlePoints(m *Movie, desiredMovie *Movie, common map[string]string) flo
 	movieNewTitle := removeCommonWords(m, common)
 	desiredMovieNewTitle := removeCommonWords(desiredMovie, common)
 
-	var onePoint float64 = ((1. / 36.) * 8.) / float64(len(desiredMovieNewTitle))
+	var onePoint float64 = ((1. / 36.) * 6.5) / float64(len(desiredMovieNewTitle))
 
 	//if match then += onePoint
 	points := 0.0
@@ -369,8 +372,11 @@ func removeCommonWords(m *Movie, common map[string]string) string {
 func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredGenre := strings.Split(desiredMovie.Genre, ", ")
 	newGenre := strings.Split(m.Genre, ", ")
+	if newGenre[0] == "N/A" || newGenre[0] == "" || newGenre[0] == " " {
+		return 0
+	}
 
-	var onePoint float64 = ((1. / 36.) * 7.) / float64(len(desiredGenre))
+	var onePoint float64 = ((1. / 36.) * 8.) / float64(len(desiredGenre))
 
 	points := 0.0
 	for _, str := range desiredGenre {
@@ -388,8 +394,11 @@ func getGenrePoints(m *Movie, desiredMovie *Movie) float64 {
 func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredActors := strings.Split(desiredMovie.Actors, ", ")
 	newActors := strings.Split(m.Actors, ", ")
+	if newActors[0] == "N/A" || newActors[0] == "" || newActors[0] == " " {
+		return 0
+	}
 
-	var onePoint float64 = ((1. / 36.) * 11.) / float64(len(desiredActors))
+	var onePoint float64 = ((1. / 36.) * 14.) / float64(len(desiredActors))
 	points := 0.0
 	for _, str := range desiredActors {
 		for _, str2 := range newActors {
@@ -404,8 +413,12 @@ func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 
 // Calculates the total of points gained for a Movie m based on the Director(s)
 func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
+
 	desiredDirector := strings.Split(desiredMovie.Director, ", ")
 	newDirector := strings.Split(m.Director, ", ")
+	if newDirector[0] == "N/A" || newDirector[0] == "" || newDirector[0] == " " {
+		return 0
+	}
 
 	var onePoint float64 = ((1. / 36.) * 8.) / float64(len(desiredDirector))
 	points := 0.0
