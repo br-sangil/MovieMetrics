@@ -123,60 +123,6 @@ func (pq *PriorityQueue) update(m *Movie, title string, priority float64) {
 
 func main() {
 	wordMap := getCommonWords()
-	// result := GetRequest("i=tt3896198")
-	// searchMovies("harry potter")
-	//
-	// type ActorSearch struct {
-	// 	Results []*Actor `json:"results"`
-	// }
-
-	// // structure used specifically for The Movie Database API since we have different Keys
-	// type Actor struct {
-	// 	Name   string    `json:"name"`
-	// 	Movies []*Movie2 `json:"known_for"`
-	// }
-
-	// type Movie2 struct {
-	// 	Title string `json:"original_title"`
-	// }
-
-	// var firstMovie Movie
-	// json.Unmarshal([]byte(result), &firstMovie)
-
-	// firstMovie.priority = 400
-	// movies := map[string]int{
-	// 	firstMovie.value: 0,
-	// 	"movie":          550,
-	// 	"movie2":         50,
-	// }
-
-	// pq := make(PriorityQueue, len(movies))
-	// i := 0
-	// for value, priority := range movies {
-	// 	pq[i] = &Movie{
-	// 		value:    value,
-	// 		priority: 0,
-	// 		index:    i,
-	// 	}
-	// 	i++
-	// }
-	// heap.Init(&pq)
-
-	//insert new item:
-	// movie := &Movie{
-	// 	value:    "MOVIE",
-	// 	priority: 300,
-	// }
-	// heap.Push(&pq, movie)
-	// pq.update(movie, movie.value, 300)
-
-	// for pq.Len() > 0 {
-	// 	item := heap.Pop(&pq).(Movie)
-	// 	fmt.Printf("%2d:%s\n", item.priority, item.value)
-	// }
-
-	// getTitlePoints(movie, &firstMovie, wordMap)
-	//--------------------------------------^ Will be removed soon (functioning heap)-------------------------------------
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w)
@@ -368,10 +314,10 @@ func searchMovies(keyWord string) ([]*Movie, error) {
 //gives a priority to a Movie based on the desired Movie
 func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) {
 	var priority float64
-	// Title    string // if match: importance(1 / 36) * 8
-	// Genre    string // if match: importance(1 / 36) * 7
-	// Actors   string // if match: importance(1 / 36) * 11
-	// Director string // if match: importance(1 / 36) * 8
+	// Title    string // if match: importance(1 / 36) * 8 (2)
+	// Genre    string // if match: importance(1 / 36) * 7 (3)
+	// Actors   string // if match: importance(1 / 36) * 11 (1)
+	// Director string // if match: importance(1 / 36) * 8 (3.5)
 	priority += getTitlePoints(m, desiredMovie, common)
 	priority += getGenrePoints(m, desiredMovie)
 	priority += getActorPoints(m, desiredMovie)
