@@ -17,6 +17,14 @@ export default function Home() {
     console.log(data);
     setMovies(data);
     // console.log(movies);
+    const element = document.querySelector('#movielist')
+    const topPos = element.getBoundingClientRect().top + window.pageYOffset
+    
+    window.scrollTo({
+      top: topPos, // scroll so that the element is at the top of the view
+      behavior: 'smooth' // smooth scroll
+    })
+    
   }
 
 
@@ -25,7 +33,7 @@ export default function Home() {
     <div className="bg-movie-posters flex h-screen justify-center items-center">
         
 
-          <form onSubmit={handleSearch} className="flex justify-center">
+          <form onSubmit={handleSearch} className="flex justify-center" action="#movieList">
             <input value={search} onChange={(e)=>setSearch(e.target.value)} type="text" className=" px-4 inline-flex rounded-l w-40 md:w-64 lg:w-96 h-10 bg-gray-200" placeholder="Search Movie by Title..."></input>
             <button type="submit" className ="h-10 w-12 rounded-r bg-red-600 hover:bg-red-700">
               <svg xmlns="http://www.w3.org/2000/svg" className="m-auto h-5 w-5" viewBox="0 0 20 20" fill="white">
@@ -42,6 +50,7 @@ export default function Home() {
 
     {/* Search results */}
     <div>
+      <a id="movielist"></a>
       {movies &&
         movies.map(movie =>
             <MovieInfo movie={movie} key={movie.Title} />
