@@ -10,6 +10,8 @@ export default function Navbar() {
         <NavItem content="Home" href="/" />
         <NavItem content="Surprise Me!" href="/random" />
         <NavItem content="About" href="/about" />
+        <NavItem content="Register" href="/register" />
+        <NavItem content="Login" href="/login" />
       </ul>
     </nav>
   );

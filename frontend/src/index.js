@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Random from './pages/Random';
 import Layout from './pages/Layout';
 import About from './pages/About';
+import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
 export default function App(){
   return (
     <BrowserRouter>
@@ -14,6 +16,8 @@ export default function App(){
         <Route index element={<Home />} />
         <Route path="/random" element={<Random/>} />
         <Route path="/about" element={<About/>} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Route>
     </Routes>
   </BrowserRouter>
