@@ -20,10 +20,10 @@ type Movie struct { // Ranking System: 1/36 for a "point"
 
 	Title    string // if match: importance(1 / 36) * 8
 	Genre    string // if match: importance(1 / 36) * 7
-	Actors   string // if match: importance(1 / 36) * 6
-	Director string // if match: importance(1 / 36) * 5
-	Rated    string // if match: importance(1 / 36) * 4 (REMOVE THIS?)
-	Type     string // if match: importance(1 / 36) * 4 (REMOVE THIS?)
+	Actors   string // if match: importance(1 / 36) * 11
+	Director string // if match: importance(1 / 36) * 8
+	// Rated    string // if match: importance(1 / 36) * 0 (REMOVE THIS?)
+	// Type     string // if match: importance(1 / 36) * 3 (REMOVE THIS?)
 	Language string // if match: importance(1 / 36) * 2
 	Poster   string // the url for posters
 	// Ratings  string // if match: importance(1 / 36) * 1
@@ -41,7 +41,7 @@ type MovieSearched struct {
 
 // structure which defines the movies that pertain to an actor via a different API
 type ActorSearch struct {
-	Results []*Movie2 `json:"results"`
+	Results []*Actor `json:"results"`
 }
 
 // structure used specifically for The Movie Database API since we have different Keys
@@ -126,19 +126,22 @@ func main() {
 	// result := GetRequest("i=tt3896198")
 	// searchMovies("harry potter")
 	//
-	// findMoviesByActor("Paul Walker")
+	// type ActorSearch struct {
+	// 	Results []*Actor `json:"results"`
+	// }
+
+	// // structure used specifically for The Movie Database API since we have different Keys
+	// type Actor struct {
+	// 	Name   string    `json:"name"`
+	// 	Movies []*Movie2 `json:"known_for"`
+	// }
+
+	// type Movie2 struct {
+	// 	Title string `json:"original_title"`
+	// }
 
 	// var firstMovie Movie
 	// json.Unmarshal([]byte(result), &firstMovie)
-	// fmt.Println("Results: ")
-	// fmt.Println(firstMovie.Title)
-	// fmt.Println(firstMovie.Genre)
-	// fmt.Println(firstMovie.Actors)
-	// fmt.Println(firstMovie.Director)
-	// fmt.Println(firstMovie.Rated)
-	// fmt.Println(firstMovie.Type)
-	// fmt.Println(firstMovie.Language)
-	// fmt.Println(firstMovie.Ratings)
 
 	// firstMovie.priority = 400
 	// movies := map[string]int{
@@ -233,6 +236,22 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 			movies = append(movies, searchResults[:]...)
 		}
 
+		actors := strings.Split(desiredMovie.Actors, ", ")
+		for _, actor := range actors {
+			actorMovies := findMoviesByActor(actor).Results[0]
+			for _, movie := range actorMovies.Movies {
+				content := GetRequest("t=" + movie.Title)
+
+				var actorMovie Movie
+				err = json.Unmarshal([]byte(content), &actorMovie)
+				checkNilErr(err)
+				fmt.Printf("%+v\n", actorMovie)
+
+				movies = append(movies, &actorMovie)
+			}
+		}
+
+		// this part is for priority queue
 		movieMap := make(map[string]*Movie)
 		for _, movie := range movies {
 			if _, ok := movieMap[movie.Title]; !ok {
@@ -249,6 +268,7 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 			heap.Push(&pq, movie)
 			pq.update(movie, movie.Title, movie.priority)
 		}
+		heap.Init(&pq)
 
 		for i := 0; i < pq.Len(); i++ {
 			println("movie:", pq[i].Title, "pr:", pq[i].priority)
@@ -260,12 +280,12 @@ func getMovieSearch(w http.ResponseWriter, r *http.Request, common map[string]st
 }
 
 // GET request themoviedb.org, searches by actor
-func findMoviesByActor(actor string) {
+func findMoviesByActor(actor string) ActorSearch {
 	words := strings.Split(actor, " ")
 	actorParse := strings.Join(words, "%20")
 	println(actorParse)
 
-	dbURL := "https://api.themoviedb.org/3/search/person?api_key=" + api_key2 + "&language=en-US&query=" + actorParse + "&page=1&include_adult=false"
+	dbURL := "https://api.themoviedb.org/3/search/person?api_key=" + api_key2 + "&language=en-US&query=" + actorParse + "&page=1&include_adult=false&region=US"
 	response, err := http.Get(dbURL)
 	checkNilErr(err)
 
@@ -274,8 +294,10 @@ func findMoviesByActor(actor string) {
 	content, err := ioutil.ReadAll(response.Body)
 	checkNilErr(err)
 
-	println(string(content))
+	var resultActors ActorSearch
+	json.Unmarshal(content, &resultActors)
 
+	return resultActors
 }
 
 // Posts a random movie to the /random page (magnificient use of imbdID)
@@ -346,12 +368,16 @@ func searchMovies(keyWord string) ([]*Movie, error) {
 //gives a priority to a Movie based on the desired Movie
 func getPriority(m *Movie, desiredMovie *Movie, common map[string]string) {
 	var priority float64
+	// Title    string // if match: importance(1 / 36) * 8
+	// Genre    string // if match: importance(1 / 36) * 7
+	// Actors   string // if match: importance(1 / 36) * 11
+	// Director string // if match: importance(1 / 36) * 8
 	priority += getTitlePoints(m, desiredMovie, common)
 	priority += getGenrePoints(m, desiredMovie)
 	priority += getActorPoints(m, desiredMovie)
 	priority += getDirectorPoints(m, desiredMovie)
-	priority += getRatedPoints(m, desiredMovie)
-	priority += getTypePoints(m, desiredMovie)
+	// priority += getRatedPoints(m, desiredMovie)
+	// priority += getTypePoints(m, desiredMovie)
 	priority += getLanguagePoints(m, desiredMovie)
 	(*m).priority = priority * 100
 	// println("calculated priority ", priority)
@@ -417,7 +443,7 @@ func getActorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredActors := strings.Split(desiredMovie.Actors, ", ")
 	newActors := strings.Split(m.Actors, ", ")
 
-	var onePoint float64 = ((1. / 36.) * 6.) / float64(len(desiredActors))
+	var onePoint float64 = ((1. / 36.) * 11.) / float64(len(desiredActors))
 	points := 0.0
 	for _, str := range desiredActors {
 		for _, str2 := range newActors {
@@ -435,7 +461,7 @@ func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 	desiredDirector := strings.Split(desiredMovie.Director, ", ")
 	newDirector := strings.Split(m.Director, ", ")
 
-	var onePoint float64 = ((1. / 36.) * 5.) / float64(len(desiredDirector))
+	var onePoint float64 = ((1. / 36.) * 8.) / float64(len(desiredDirector))
 	points := 0.0
 	for _, str := range desiredDirector {
 		for _, str2 := range newDirector {
@@ -451,25 +477,25 @@ func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 // Calculates the total of points gained for a Movie m for what it's Rated
 // if the rating matches then we will give full points
 // else we give half points because who cares about the rating. RIGHT?? do you care?
-func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
-	var onePoint float64 = (1. / 36.) * 4
-	if m.Rated == desiredMovie.Rated {
-		return onePoint
-	}
-	return onePoint / 2.
-}
+// func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
+// 	var onePoint float64 = (1. / 36.) * 4
+// 	if m.Rated == desiredMovie.Rated {
+// 		return onePoint
+// 	}
+// 	return onePoint / 2.
+// }
 
 // Calculates the total of points gained for a Movie m for the type of media
 // if media type matches then we give full points
 // else we give half points becuase we still want to consider series, episodes, etc..
-func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
-	var onePoint float64 = (1. / 36.) * 4
-	if m.Type == desiredMovie.Type {
-		return onePoint
-	}
+// func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
+// 	var onePoint float64 = (1. / 36.) * 4
+// 	if m.Type == desiredMovie.Type {
+// 		return onePoint
+// 	}
 
-	return onePoint / 2.
-}
+// 	return onePoint / 2.
+// }
 
 // Calculates the total of points gained for a Movie m for the language
 // if m matches desiredMovie we give full points
