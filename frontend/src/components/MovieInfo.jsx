@@ -12,24 +12,13 @@ const MovieInfo = ({movie}) => {
 
 
     return (
-        <div className="pt-10 flex flex-col justify-center items-center text-xl">
+        <div className="pt-10 flex flex-col justify-center items-center text-xl font-sans">
             <img src={movie.Poster} alt="Movie poster not available" />
-            <h1 className="pt-6">{movie.Title}</h1>
-            {/* <h1>Writer: {movie.Writer}</h1> */}
-            {/* <h1>Year released: {movie.Year}</h1> */}
-            <h1>Director: {movie.Director}</h1>
-            <h1>Actors: {movie.Actors}</h1>
-            <h1>Genre: {movie.Genre}</h1>
-            {/* <h1>Plot: {movie.Plot}</h1> */}
-            {/* <div>
-            Ratings: <ul>
-                {movie.Ratings.length > 0 ? 
-                    movie.Ratings.map(rating => <li key={rating.Value}>{rating.Value}</li>)
-                    :
-                    <li>No ratings</li>
-                }
-            </ul>
-            </div> */}
+            <p className="pt-6 pb-4 font-bold text-3xl">{movie.Title}</p>
+            <p>Director: {movie.Director}</p>
+            <p>Actors: {movie.Actors}</p>
+            <p className="pb-8">Genre: {movie.Genre}</p>
+           
         </div>
     )
 }
