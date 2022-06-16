@@ -25,10 +25,10 @@ export default function About() {
         <h1>Our Proprietary Algorithm</h1>
         <p>When you search for a movie, our algorithm selects the most "relevant" films for you, in order, based on the following categories ranked in order of impotance:</p>
         <ol>
-          <li>Actors</li>
-          <li>Genre</li>
-          <li>Directors</li>
-          <li>Movie Title</li>
+          <li>- Actors</li>
+          <li>- Genre</li>
+          <li>- Directors</li>
+          <li>- Movie Title</li>
         </ol>
         <p>We believe that we have found the perfect formula, using these categories, to allow you - the consumer - to make the most informed choices when deciding the movie that you want to watch!</p>
         </div>
