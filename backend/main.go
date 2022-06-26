@@ -433,29 +433,6 @@ func getDirectorPoints(m *Movie, desiredMovie *Movie) float64 {
 	return points
 }
 
-// Calculates the total of points gained for a Movie m for what it's Rated
-// if the rating matches then we will give full points
-// else we give half points because who cares about the rating. RIGHT?? do you care?
-// func getRatedPoints(m *Movie, desiredMovie *Movie) float64 {
-// 	var onePoint float64 = (1. / 36.) * 4
-// 	if m.Rated == desiredMovie.Rated {
-// 		return onePoint
-// 	}
-// 	return onePoint / 2.
-// }
-
-// Calculates the total of points gained for a Movie m for the type of media
-// if media type matches then we give full points
-// else we give half points becuase we still want to consider series, episodes, etc..
-// func getTypePoints(m *Movie, desiredMovie *Movie) float64 {
-// 	var onePoint float64 = (1. / 36.) * 4
-// 	if m.Type == desiredMovie.Type {
-// 		return onePoint
-// 	}
-
-// 	return onePoint / 2.
-// }
-
 // Calculates the total of points gained for a Movie m for the language
 // if m matches desiredMovie we give full points
 // else do not add any points
